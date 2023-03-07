@@ -1,0 +1,190 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <link rel="stylesheet" href="{% static 'tiff/lib/leaflet-measure.css' %}">
+    <link rel="stylesheet" href="{% static 'tiff/lib/MarkerCluster.css' %}">
+    <link rel="stylesheet" href="{% static 'tiff/lib/MarkerCluster.Default.css' %}">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+    <link rel="stylesheet" href="{% static 'tiff/dist/style.css' %}">
+    <link rel="stylesheet" href="{% static 'tiff/lib/styledLayerControl.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.2.1/themes/default/style.min.css" />
+    <title>Leaflet Geoproject</title>
+    <style>
+        .logout{
+            color: rgb(8, 5, 2);
+            background-color: transparent;
+            float: left;
+            border: none;
+            color: white;
+        }
+        .str_link{
+            color: white;
+            float: left;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Nav bar  -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-info">
+        <a class="navbar-brand" href="#">Basic Web-GIS</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item active">
+                    <a class="nav-link" href="http://127.0.0.1:8000/">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="http://127.0.0.1:8000/admin/">Upload data</a>
+                </li>
+            </ul>
+        </div>
+
+        <div id="user-tools">
+            <!-- {% block welcome-msg %}
+                <strong class="strr"><a class='str_link' href="{{ site_url }}">{% firstof user.get_short_name user.get_username %}</a></strong>
+            {% endblock %} -->
+            <form class="log_out" method="post" action="{% url 'account:logout' %}">
+                {% csrf_token %}
+               
+                <button class='logout' type="submit">
+                    <img src="{% static 'tiff/images/box-arrow-right.svg' %}" alt="1" style="height: 30px;width: 30px;color:white">
+                </button>
+            </form>
+        </div>
+    </nav>
+
+    <div id="map">
+        <!-- Map coordinate  -->
+        <div class="leaflet-control map-coordinate">
+            <div class="coordinate"></div>
+        </div>
+        
+        <!-- Map coordinate  -->
+        <div class="fixedd"><img
+			src="{% static 'tiff/images/legender.JPG' %}" width="112" height="154" >
+		</div>
+
+        <!-- full browser  -->
+        <div class="leaflet-control full-screen" onclick=fullScreenView()>
+            <svg width="1.5em" height="1.5em" viewBox="0 0 16 16" class="bi bi-arrows-fullscreen" fill="currentColor"
+                xmlns="http://www.w3.org/2000/svg">
+                <path fill-rule="evenodd"
+                    d="M5.828 10.172a.5.5 0 0 0-.707 0l-4.096 4.096V11.5a.5.5 0 0 0-1 0v3.975a.5.5 0 0 0 .5.5H4.5a.5.5 0 0 0 0-1H1.732l4.096-4.096a.5.5 0 0 0 0-.707zm4.344 0a.5.5 0 0 1 .707 0l4.096 4.096V11.5a.5.5 0 1 1 1 0v3.975a.5.5 0 0 1-.5.5H11.5a.5.5 0 0 1 0-1h2.768l-4.096-4.096a.5.5 0 0 1 0-.707zm0-4.344a.5.5 0 0 0 .707 0l4.096-4.096V4.5a.5.5 0 1 0 1 0V.525a.5.5 0 0 0-.5-.5H11.5a.5.5 0 0 0 0 1h2.768l-4.096 4.096a.5.5 0 0 0 0 .707zm-4.344 0a.5.5 0 0 1-.707 0L1.025 1.732V4.5a.5.5 0 0 1-1 0V.525a.5.5 0 0 1 .5-.5H4.5a.5.5 0 0 1 0 1H1.732l4.096 4.096a.5.5 0 0 1 0 .707z" />
+            </svg>
+        </div>
+
+        <!-- zoom to layer  -->
+        <div class="leaflet-control zoom-to-layer">
+            <svg width="1.5em" height="1.5em" viewBox="0 0 16 16" class="bi bi-house-door" fill="currentColor"
+                xmlns="http://www.w3.org/2000/svg">
+                <path fill-rule="evenodd"
+                    d="M7.646 1.146a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 .146.354v7a.5.5 0 0 1-.5.5H9.5a.5.5 0 0 1-.5-.5v-4H7v4a.5.5 0 0 1-.5.5H2a.5.5 0 0 1-.5-.5v-7a.5.5 0 0 1 .146-.354l6-6zM2.5 7.707V14H6v-4a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 .5.5v4h3.5V7.707L8 2.207l-5.5 5.5z" />
+                <path fill-rule="evenodd" d="M13 2.5V6l-2-2V2.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5z" />
+            </svg>
+        </div>
+    </div>
+
+</body>
+
+</html>
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script src="{% static 'tiff/lib/leaflet.browser.print.min.js' %}"></script>
+<script src="{% static 'tiff/lib/leaflet-measure.js' %}"></script>
+<script src="{% static 'tiff/lib/leaflet.markercluster.js' %}"></script>
+<script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+<script src="{% static 'tiff/data/test.js' %}"></script>
+<script src="{% static 'tiff/dist/main.js' %}"></script>
+<script src="{% static 'tiff/dist/web-GIS.js' %}"></script>
+<script src="{% static 'tiff/lib/styledLayerControl.js' %}"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.12.1/jquery.min.js"></script>
+<script>
+        // var imageUrl = '/static/tiff/data/anzaliwatershed_2021_s_451.png',
+        // imageBounds = [[36.893808718788755,48.77205205764436],[37.5788639544583,49.73387823235113]];
+
+        // var layer_anzaliwatershed_2021_s_451= L.imageOverlay(imageUrl, imageBounds);
+        var osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: ''
+        });
+
+        var GoogleSatellite = L.tileLayer('http://www.google.cn/maps/vt?lyrs=s@189&gl=cn&x={x}&y={y}&z={z}', {
+            attribution:'',
+            subdomains: '',
+            minZoom: 1,
+            maxZoom: 28,
+         }).addTo(map);
+        //  var baseMaps = {
+        //     'OSM': osm,
+        //     'GoogleSatellite': GoogleSatellite
+        // }
+        var baseMaps = [
+			                { 
+								groupName : "Base Maps",
+								expanded : true,
+								layers    : {
+									'GoogleSatellite': GoogleSatellite,
+									'OSM': osm,
+								}
+					        }							
+			];
+        var overlayMaps= [];
+        // {% for s in tiff %}
+        //     var {{ s.name }} = L.tileLayer.wms('http://localhost:8080/geoserver/wms', {
+        //         layers: '{{ s.name }}',
+        //         transparent:true,
+        //         format: 'image/png'
+        //         })
+        //     overlayMaps['{{ s.name }}'] = {{ s.name }}
+        // {% endfor %}
+
+        
+
+        var options = {
+            container_width 	: "300px",
+            group_maxHeight     : "300px",
+            container_maxHeight : "600px", 
+            exclusive       	: true
+        };
+    
+        var control = L.Control.styledLayerControl(baseMaps, overlayMaps, options);
+        map.addControl(control);
+
+        // control.addBaseLayer( osm, "Osm", {groupName : "Bing Maps", expanded: true} );
+
+        {% for s in tiff %}
+            var {{ s.name }} = L.tileLayer.wms('http://localhost:8080/geoserver/wms', {
+                layers: '{{ s.name }}',
+                transparent:true,
+                format: 'image/png'
+                })
+                control.addOverlay( {{ s.name }}, '{{ s.name }}', {groupName : "{{ s.category }}"} );	
+        {% endfor %}
+        
+
+
+        // var baseMaps = {
+        // 'OSM': osm,
+        // 'GoogleSatellite': GoogleSatellite
+        // }
+
+        // L.control.layers(baseMaps, overlayMaps, { collapsed: false, position: 'topright' }).addTo(map);
+	   
+        // setBounds();
+        // L.ImageOverlay.include({
+        //     getBounds: function () {
+        //         return this._bounds;
+        //     }
+        // });
+</script>
